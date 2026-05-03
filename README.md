@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# My Library
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Uma aplicação React moderna para gerenciar, visualizar e ler livros digitais. Oferece uma interface intuitiva com suporte a temas (claro/escuro) e componentes reutilizáveis construídos com Chakra UI.
 
-Currently, two official plugins are available:
+## ✨ Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 📚 Gerenciamento de biblioteca de livros
+- 🌙 Suporte a modo claro e escuro (com next-themes)
+- 🎨 Interface moderna com Chakra UI
+- ⌨️ Componentes acessíveis
+- 📱 Design responsivo
+- ⚡ Performance otimizada com Vite
 
-## React Compiler
+## 🛠️ Tecnologias Utilizadas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React** 19.2.5 - Biblioteca UI
+- **TypeScript** 6.0.2 - Tipagem estática
+- **Vite** 8.0.10 - Build tool e dev server
+- **Chakra UI** 3.35.0 - Componentes UI
+- **Next Themes** 0.4.6 - Gerenciamento de temas
+- **React Icons** 5.6.0 - Ícones
+- **Emotion** 11.14.0 - CSS-in-JS
+- **ESLint** 10.2.1 - Linting
+- **TypeScript ESLint** 8.58.2 - Linting TypeScript
 
-## Expanding the ESLint configuration
+## 📁 Estrutura do Projeto
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── components/
+│   ├── atoms/              # Componentes básicos (botões, barras de progresso)
+│   ├── molecules/          # Componentes compostos (cartões de livros, notas)
+│   ├── organisms/          # Componentes complexos (painéis da aplicação)
+│   └── ui/                 # Utilitários UI (temas, providers, tooltips)
+├── pages/                  # Páginas da aplicação
+├── utils/                  # Funções utilitárias
+├── types/                  # Definições TypeScript
+├── mocks/                  # Dados mock para desenvolvimento
+├── assets/                 # Arquivos estáticos
+└── main.tsx               # Ponto de entrada
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📦 Instalação
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Clone o repositório:
+```bash
+git clone <seu-repositorio>
+cd my-library
 ```
+
+2. Instale as dependências:
+```bash
+npm install
+```
+
+## 🚀 Como Rodar
+
+### Desenvolvimento
+Inicie o servidor de desenvolvimento com HMR (Hot Module Replacement):
+```bash
+npm run dev
+```
+
+A aplicação estará disponível em `http://localhost:5173`
+
+### Build para Produção
+Compila TypeScript e cria a build otimizada:
+```bash
+npm run build
+```
+
+Os arquivos compilados estarão em `dist/`
+
+### Preview da Build
+Visualiza a versão de produção localmente:
+```bash
+npm run preview
+```
+
+### Lint
+Verifica o código com ESLint:
+```bash
+npm run lint
+```
+
+## 📝 Scripts Disponíveis
+
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Inicia o servidor de desenvolvimento |
+| `npm run build` | Compila para produção |
+| `npm run preview` | Visualiza a build de produção localmente |
+| `npm run lint` | Executa o linting do código |
+
+## 🎨 Temas
+
+O projeto utiliza `next-themes` para gerenciar temas. Você pode alternar entre modo claro e escuro facilmente através do componente de controle de tema.
