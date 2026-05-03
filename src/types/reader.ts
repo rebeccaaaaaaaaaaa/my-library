@@ -24,5 +24,5 @@ export type LibraryBook = {
   coverB: string
   notes: ReaderNote[]
   bookmarks: ReaderBookmark[]
-  isUploaded?: boolean
+  hasPdf?: boolean
 }

@@ -1,4 +1,4 @@
-import { FiBookmark, FiList, FiMoon, FiSearch, FiSun, FiUpload, FiUser } from "react-icons/fi"
+import { FiBookmark, FiList, FiLoader, FiMoon, FiSearch, FiSun, FiUpload, FiUser } from "react-icons/fi"
 import { ActionIconButton } from "@/components/atoms/action-icon-button"
 import type { LibraryBook } from "@/types/reader"
 
@@ -82,6 +82,11 @@ export function ReaderPanel({
         <div className="reader-canvas">
           {readerUrl ? (
             <iframe title={activeBook.title} src={readerUrl} className="pdf-frame" />
+          ) : activeBook.hasPdf ? (
+            <div className="empty-reader-state">
+              <FiLoader className="spin-icon" />
+              <p>Carregando PDF...</p>
+            </div>
           ) : (
             <div className="empty-reader-state">
               <FiUpload />

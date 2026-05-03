@@ -6,16 +6,33 @@ import { RightPanel } from "@/components/organisms/right-panel"
 import { initialBooks } from "@/mocks/library"
 import type { LibraryBook } from "@/types/reader"
 import { clamp, makeId } from "@/utils/reader"
+import {
+  getPdfPageCount,
+  loadBooks,
+  loadPdfUrl,
+  saveBooks,
+  savePdf,
+} from "@/utils/storage"
 import "./home.css"
 
 function Home() {
-  const [books, setBooks] = useState<LibraryBook[]>(initialBooks)
-  const [activeBookId, setActiveBookId] = useState(initialBooks[0].id)
+  const [books, setBooks] = useState<LibraryBook[]>(
+    () => loadBooks() ?? initialBooks,
+  )
+  const [activeBookId, setActiveBookId] = useState(
+    () => (loadBooks() ?? initialBooks)[0]?.id ?? "",
+  )
   const [searchValue, setSearchValue] = useState("")
   const [zoom, setZoom] = useState(100)
-  const [pageInput, setPageInput] = useState(String(initialBooks[0].lastPage))
+  const [pageInput, setPageInput] = useState(() => {
+    const stored = loadBooks() ?? initialBooks
+    return String(stored[0]?.lastPage ?? 1)
+  })
   const [noteDraft, setNoteDraft] = useState("")
-  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Keep a ref so the unmount cleanup always sees fresh blob URLs
+  const booksRef = useRef(books)
+  booksRef.current = books
 
   const activeBook = useMemo(
     () => books.find((book) => book.id === activeBookId) ?? books[0],
@@ -32,20 +49,35 @@ function Home() {
     )
   }, [books, searchValue])
 
+  // Sync page input when active book changes
   useEffect(() => {
     if (!activeBook) return
     setPageInput(String(activeBook.lastPage))
   }, [activeBook])
 
+  // Persist books metadata to localStorage on every change
   useEffect(() => {
+    saveBooks(books)
+  }, [books])
+
+  // On mount: restore blob URLs for books whose PDFs are in IndexedDB
+  useEffect(() => {
+    books.forEach(async (book) => {
+      if (!book.hasPdf) return
+      const url = await loadPdfUrl(book.id)
+      if (!url) return
+      setBooks((prev) =>
+        prev.map((b) => (b.id === book.id ? { ...b, sourceUrl: url } : b)),
+      )
+    })
+    // Revoke all blob URLs on unmount
     return () => {
-      books.forEach((book) => {
-        if (book.isUploaded && book.sourceUrl) {
-          URL.revokeObjectURL(book.sourceUrl)
-        }
+      booksRef.current.forEach((book) => {
+        if (book.hasPdf && book.sourceUrl) URL.revokeObjectURL(book.sourceUrl)
       })
     }
-  }, [books])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!activeBook) return null
 
@@ -102,7 +134,7 @@ function Home() {
               id: makeId(),
               page: book.lastPage,
               text,
-              date: "Agora",
+              date: new Date().toLocaleDateString("pt-BR"),
             },
             ...book.notes,
           ],
@@ -112,25 +144,31 @@ function Home() {
     setNoteDraft("")
   }
 
-  const onUploadPdf: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onUploadPdf: React.ChangeEventHandler<HTMLInputElement> = async (
+    event,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const sourceUrl = URL.createObjectURL(file)
+    const id = makeId()
     const title = file.name.replace(/\.pdf$/i, "")
+    const totalPages = await getPdfPageCount(file)
+    await savePdf(id, file)
+    const sourceUrl = URL.createObjectURL(file)
+
     const newBook: LibraryBook = {
-      id: makeId(),
+      id,
       title,
       author: "PDF enviado",
-      progress: 1,
+      progress: 0,
       lastPage: 1,
-      totalPages: 200,
+      totalPages,
       sourceUrl,
       coverA: "#4f46e5",
       coverB: "#7c3aed",
       notes: [],
       bookmarks: [],
-      isUploaded: true,
+      hasPdf: true,
     }
 
     setBooks((prev) => [newBook, ...prev])
@@ -141,16 +179,8 @@ function Home() {
 
   return (
     <div className="reader-app">
-      <input
-        ref={fileRef}
-        className="sr-only-input"
-        type="file"
-        accept="application/pdf"
-        onChange={onUploadPdf}
-      />
-
       <LeftPanel
-        fileInputRef={fileRef}
+        onUploadPdf={onUploadPdf}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         books={filteredBooks}

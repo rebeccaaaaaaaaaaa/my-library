@@ -6,12 +6,11 @@ import {
   FiSearch,
   FiUpload,
 } from "react-icons/fi"
-import type { RefObject } from "react"
 import { BookCard } from "@/components/molecules/book-card"
 import type { LibraryBook } from "@/types/reader"
 
 type LeftPanelProps = {
-  fileInputRef: RefObject<HTMLInputElement | null>
+  onUploadPdf: React.ChangeEventHandler<HTMLInputElement>
   searchValue: string
   onSearchChange: (value: string) => void
   books: LibraryBook[]
@@ -20,7 +19,7 @@ type LeftPanelProps = {
 }
 
 export function LeftPanel({
-  fileInputRef,
+  onUploadPdf,
   searchValue,
   onSearchChange,
   books,
@@ -34,10 +33,16 @@ export function LeftPanel({
         <strong>Bookly</strong>
       </div>
 
-      <button className="upload-btn" onClick={() => fileInputRef.current?.click()}>
+      <label className="upload-btn">
         <FiPlus />
         Upload PDF
-      </button>
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={onUploadPdf}
+          style={{ display: "none" }}
+        />
+      </label>
 
       <label className="search-input">
         <FiSearch />
