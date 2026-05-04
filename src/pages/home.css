@@ -193,6 +193,40 @@
   opacity: 1;
 }
 
+.book-favorite-btn {
+  position: absolute;
+  top: 6px;
+  right: 40px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #7f8498;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.book-favorite-btn.is-favorite {
+  color: #f59e0b;
+  background: rgba(255, 248, 230, 0.95);
+}
+
+.book-card:hover .book-favorite-btn,
+.book-card:focus-within .book-favorite-btn {
+  opacity: 1;
+}
+
+.book-favorite-btn:hover {
+  color: #f59e0b;
+  background: rgba(255, 248, 230, 1);
+}
+
 .book-delete-btn:hover {
   background: rgba(255, 59, 48, 1);
   box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);

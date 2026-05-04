@@ -15,15 +15,26 @@ import {
 } from "@/utils/storage"
 import "./home.css"
 
+type LibraryFilter = "all" | "favorites"
+
+function readStoredBooks(): LibraryBook[] {
+  const stored = loadBooks() ?? []
+  return stored.map((book) => ({
+    ...book,
+    isFavorite: Boolean(book.isFavorite),
+  }))
+}
+
 function Home() {
-  const [books, setBooks] = useState<LibraryBook[]>(() => loadBooks() ?? [])
+  const [books, setBooks] = useState<LibraryBook[]>(() => readStoredBooks())
   const [activeBookId, setActiveBookId] = useState(
-    () => (loadBooks() ?? [])[0]?.id ?? "",
+    () => readStoredBooks()[0]?.id ?? "",
   )
+  const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all")
   const [searchValue, setSearchValue] = useState("")
-  const [zoom, setZoom] = useState(50)
+  const [zoom, setZoom] = useState(100)
   const [pageInput, setPageInput] = useState(() => {
-    const stored = loadBooks() ?? []
+    const stored = readStoredBooks()
     return String(stored[0]?.lastPage ?? 1)
   })
   const [noteDraft, setNoteDraft] = useState("")
@@ -38,14 +49,19 @@ function Home() {
   )
 
   const filteredBooks = useMemo(() => {
-    if (!searchValue.trim()) return books
+    const sourceBooks =
+      libraryFilter === "favorites"
+        ? books.filter((book) => book.isFavorite)
+        : books
+
+    if (!searchValue.trim()) return sourceBooks
     const term = searchValue.toLowerCase()
-    return books.filter(
+    return sourceBooks.filter(
       (book) =>
         book.title.toLowerCase().includes(term) ||
         book.author.toLowerCase().includes(term),
     )
-  }, [books, searchValue])
+  }, [books, searchValue, libraryFilter])
 
   // Sync page input when active book changes
   useEffect(() => {
@@ -150,6 +166,16 @@ function Home() {
     )
   }
 
+  const toggleFavorite = (bookId: string) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === bookId
+          ? { ...book, isFavorite: !book.isFavorite }
+          : book,
+      ),
+    )
+  }
+
   const addBookmark = () => {
     if (!activeBook) return
 
@@ -214,6 +240,7 @@ function Home() {
       id,
       title,
       author: "PDF enviado",
+      isFavorite: false,
       progress: Math.round((1 / Math.max(1, totalPages)) * 100),
       lastPage: 1,
       totalPages,
@@ -236,6 +263,9 @@ function Home() {
       <LeftPanel
         onUploadPdf={onUploadPdf}
         onDeleteBook={deleteBook}
+        onToggleFavorite={toggleFavorite}
+        activeFilter={libraryFilter}
+        onFilterChange={setLibraryFilter}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         books={filteredBooks}

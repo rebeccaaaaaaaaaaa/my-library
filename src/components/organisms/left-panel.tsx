@@ -9,9 +9,14 @@ import {
 import { BookCard } from "@/components/molecules/book-card"
 import type { LibraryBook } from "@/types/reader"
 
+type LibraryFilter = "all" | "favorites"
+
 type LeftPanelProps = {
   onUploadPdf: React.ChangeEventHandler<HTMLInputElement>
   onDeleteBook: (bookId: string) => void
+  onToggleFavorite: (bookId: string, e: React.MouseEvent) => void
+  activeFilter: LibraryFilter
+  onFilterChange: (filter: LibraryFilter) => void
   searchValue: string
   onSearchChange: (value: string) => void
   books: LibraryBook[]
@@ -22,6 +27,9 @@ type LeftPanelProps = {
 export function LeftPanel({
   onUploadPdf,
   onDeleteBook,
+  onToggleFavorite,
+  activeFilter,
+  onFilterChange,
   searchValue,
   onSearchChange,
   books,
@@ -32,7 +40,7 @@ export function LeftPanel({
     <aside className="left-panel">
       <div className="brand-row">
         <FiBook />
-        <strong>Bookly</strong>
+        <strong>My Lib</strong>
       </div>
 
       <label className="upload-btn">
@@ -64,17 +72,30 @@ export function LeftPanel({
             book={book}
             selected={book.id === activeBookId}
             onSelect={onSelectBook}
-            onDelete={onDeleteBook}
+            onDelete={(bookId, e) => {
+              e.stopPropagation()
+              onDeleteBook(bookId)
+            }}
+            onToggleFavorite={(bookId, e) => {
+              e.stopPropagation()
+              onToggleFavorite(bookId, e)
+            }}
           />
         ))}
       </div>
 
       <div className="left-footer-menu">
-        <button className="menu-item active">
+        <button
+          className={`menu-item ${activeFilter === "all" ? "active" : ""}`}
+          onClick={() => onFilterChange("all")}
+        >
           <FiClock />
           Em andamento
         </button>
-        <button className="menu-item">
+        <button
+          className={`menu-item ${activeFilter === "favorites" ? "active" : ""}`}
+          onClick={() => onFilterChange("favorites")}
+        >
           <FiBookmark />
           Favoritos
         </button>

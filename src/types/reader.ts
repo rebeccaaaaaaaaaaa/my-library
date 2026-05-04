@@ -16,6 +16,7 @@ export type LibraryBook = {
   id: string
   title: string
   author: string
+  isFavorite: boolean
   progress: number
   lastPage: number
   totalPages: number
