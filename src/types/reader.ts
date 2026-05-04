@@ -18,6 +18,11 @@ export type ReaderHighlight = {
   text: string
 }
 
+export type ReaderDailyStat = {
+  date: string
+  pages: number
+}
+
 export type LibraryBook = {
   id: string
   title: string
@@ -32,5 +37,7 @@ export type LibraryBook = {
   notes: ReaderNote[]
   bookmarks: ReaderBookmark[]
   highlights: ReaderHighlight[]
+  dailyGoal: number
+  readingStats: ReaderDailyStat[]
   hasPdf?: boolean
 }

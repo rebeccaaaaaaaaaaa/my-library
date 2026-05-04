@@ -17,6 +17,14 @@ import "./home.css"
 
 type LibraryFilter = "all" | "favorites"
 
+function getDayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function normalizeDailyGoal(value: number): number {
+  return clamp(Math.round(value), 1, 200)
+}
+
 function readStoredBooks(): LibraryBook[] {
   const stored = loadBooks() ?? []
   return stored.map((book) => ({
@@ -25,6 +33,8 @@ function readStoredBooks(): LibraryBook[] {
     notes: book.notes ?? [],
     bookmarks: book.bookmarks ?? [],
     highlights: book.highlights ?? [],
+    dailyGoal: normalizeDailyGoal(book.dailyGoal ?? 12),
+    readingStats: book.readingStats ?? [],
   }))
 }
 
@@ -110,10 +120,44 @@ function Home() {
     setBooks((prev) =>
       prev.map((book) => {
         if (book.id !== activeBook.id) return book
+
+        const pagesReadNow = Math.max(0, nextPage - book.lastPage)
+        const todayKey = getDayKey()
+        let nextStats = book.readingStats
+
+        if (pagesReadNow > 0) {
+          const todayEntry = nextStats.find((entry) => entry.date === todayKey)
+          if (todayEntry) {
+            nextStats = nextStats.map((entry) =>
+              entry.date === todayKey
+                ? { ...entry, pages: entry.pages + pagesReadNow }
+                : entry,
+            )
+          } else {
+            nextStats = [...nextStats, { date: todayKey, pages: pagesReadNow }]
+          }
+        }
+
         return {
           ...book,
           lastPage: nextPage,
           progress: Math.round((nextPage / book.totalPages) * 100),
+          readingStats: nextStats,
+        }
+      }),
+    )
+  }
+
+  const setDailyGoal = (rawValue: number) => {
+    if (!activeBook) return
+
+    const goal = normalizeDailyGoal(rawValue)
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== activeBook.id) return book
+        return {
+          ...book,
+          dailyGoal: goal,
         }
       }),
     )
@@ -330,6 +374,8 @@ function Home() {
       notes: [],
       bookmarks: [],
       highlights: [],
+      dailyGoal: 12,
+      readingStats: [],
       hasPdf: true,
     }
 
@@ -377,6 +423,7 @@ function Home() {
         onAddBookmark={addBookmark}
         onRemoveBookmark={removeBookmark}
         onApplyPage={applyPage}
+        onSetDailyGoal={setDailyGoal}
       />
 
       <button className="mobile-menu-trigger" aria-label="Abrir menu">
