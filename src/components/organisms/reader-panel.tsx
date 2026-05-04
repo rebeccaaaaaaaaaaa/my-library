@@ -45,23 +45,17 @@ export function ReaderPanel({
 }: ReaderPanelProps) {
   const { colorMode, setColorMode } = useColorMode()
   const containerRef = useRef<HTMLDivElement>(null)
-  const transitionTimeoutRef = useRef<number | undefined>(undefined)
   const pageTurnTimeoutRef = useRef<number | undefined>(undefined)
   const isPageTurnLockedRef = useRef(false)
-  const renderedBookIdRef = useRef<string | null>(null)
   const [containerWidth, setContainerWidth] = useState(0)
-  const [lightLevel, setLightLevel] = useState(100)
-  const [displayPage, setDisplayPage] = useState(1)
-  const [isPageTransitioning, setIsPageTransitioning] = useState(false)
-  const lastScrollRef = useRef(0)
-
-  useEffect(() => {
-    const raw = localStorage.getItem(READER_LIGHT_LEVEL_KEY)
-    if (!raw) return
+  const [lightLevel, setLightLevel] = useState(() => {
+    const raw = window.localStorage.getItem(READER_LIGHT_LEVEL_KEY)
+    if (!raw) return 100
     const parsed = Number(raw)
-    if (!Number.isFinite(parsed)) return
-    setLightLevel(Math.max(70, Math.min(130, Math.round(parsed))))
-  }, [])
+    if (!Number.isFinite(parsed)) return 100
+    return Math.max(70, Math.min(130, Math.round(parsed)))
+  })
+  const lastScrollRef = useRef(0)
 
   useEffect(() => {
     localStorage.setItem(READER_LIGHT_LEVEL_KEY, String(lightLevel))
@@ -86,12 +80,12 @@ export function ReaderPanel({
     return Math.max(260, Math.floor(baseWidth * (zoom / 100)))
   }, [containerWidth, zoom])
 
+  const activePdfBook = activeBook?.sourceUrl ? activeBook : null
+  const displayPage = activePdfBook?.lastPage ?? 1
   const pageHighlights = useMemo(
     () => highlights.filter((highlight) => highlight.page === displayPage),
     [highlights, displayPage],
   )
-
-  const activePdfBook = activeBook?.sourceUrl ? activeBook : null
   const lightPercent = Math.max(70, Math.min(130, Math.round(lightLevel)))
 
   useEffect(() => {
@@ -118,37 +112,6 @@ export function ReaderPanel({
     lockPageTurn()
   }
 
-  useEffect(() => {
-    if (!activePdfBook) {
-      renderedBookIdRef.current = null
-      setDisplayPage(1)
-      setIsPageTransitioning(false)
-      return
-    }
-
-    const isDifferentBook = renderedBookIdRef.current !== activePdfBook.id
-    if (isDifferentBook) {
-      renderedBookIdRef.current = activePdfBook.id
-      setDisplayPage(activePdfBook.lastPage)
-      setIsPageTransitioning(false)
-      return
-    }
-
-    if (displayPage === activePdfBook.lastPage) return
-
-    setIsPageTransitioning(true)
-    transitionTimeoutRef.current = window.setTimeout(() => {
-      setDisplayPage(activePdfBook.lastPage)
-      setIsPageTransitioning(false)
-    }, 140)
-
-    return () => {
-      if (transitionTimeoutRef.current) {
-        window.clearTimeout(transitionTimeoutRef.current)
-      }
-    }
-  }, [activePdfBook, displayPage])
-
   const handleScrollTriggerPageChange: React.UIEventHandler<HTMLDivElement> = (event) => {
     if (!activeBook || !activePdfBook) return
 
@@ -159,7 +122,7 @@ export function ReaderPanel({
     const wasScrollingDown = currentScroll > lastScrollRef.current
     const wasScrollingUp = currentScroll < lastScrollRef.current
 
-    if (isPageTurnLockedRef.current || isPageTransitioning) {
+    if (isPageTurnLockedRef.current) {
       lastScrollRef.current = currentScroll
       return
     }
@@ -326,7 +289,8 @@ export function ReaderPanel({
         >
           {activePdfBook ? (
             <div
-              className={`pdf-light-stage ${isPageTransitioning ? "is-page-changing" : ""}`}
+              key={`${activePdfBook.id}-${displayPage}`}
+              className="pdf-light-stage"
               style={{ filter: `brightness(${lightPercent}%)` }}
             >
               <Document

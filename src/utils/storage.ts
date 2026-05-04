@@ -70,7 +70,11 @@ export function loadBooks(): LibraryBook[] | null {
 
 /** Persists books without the ephemeral sourceUrl blob. */
 export function saveBooks(books: LibraryBook[]): void {
-  const toStore = books.map(({ sourceUrl: _url, ...rest }) => rest)
+  const toStore = books.map((book) => {
+    const rest = { ...book }
+    delete rest.sourceUrl
+    return rest
+  })
   localStorage.setItem(BOOKS_KEY, JSON.stringify(toStore))
 }
 

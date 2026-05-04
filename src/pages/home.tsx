@@ -55,7 +55,6 @@ function Home() {
 
   // Keep a ref so the unmount cleanup always sees fresh blob URLs
   const booksRef = useRef(books)
-  booksRef.current = books
 
   const activeBook = useMemo(
     () => books.find((book) => book.id === activeBookId) ?? books[0],
@@ -77,11 +76,9 @@ function Home() {
     )
   }, [books, searchValue, libraryFilter])
 
-  // Sync page input when active book changes
   useEffect(() => {
-    if (!activeBook) return
-    setPageInput(String(activeBook.lastPage))
-  }, [activeBook])
+    booksRef.current = books
+  }, [books])
 
   // Persist books metadata to localStorage on every change
   useEffect(() => {
@@ -397,7 +394,12 @@ function Home() {
         onSearchChange={setSearchValue}
         books={filteredBooks}
         activeBookId={activeBook?.id ?? ""}
-        onSelectBook={setActiveBookId}
+        onSelectBook={(bookId) => {
+          const nextBook = books.find((book) => book.id === bookId)
+          setActiveBookId(bookId)
+          setPageInput(String(nextBook?.lastPage ?? 1))
+          setSelectedHighlightText("")
+        }}
       />
 
       <ReaderPanel
