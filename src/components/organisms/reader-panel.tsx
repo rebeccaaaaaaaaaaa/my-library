@@ -198,15 +198,6 @@ export function ReaderPanel({
         </div>
 
         <div className="header-actions">
-          <ActionIconButton>
-            <FiSearch />
-          </ActionIconButton>
-          <ActionIconButton>
-            <FiBookmark />
-          </ActionIconButton>
-          <ActionIconButton>
-            <FiList />
-          </ActionIconButton>
           <ActionIconButton
             onClick={() => setColorMode("light")}
             ariaLabel="Ativar tema claro"
