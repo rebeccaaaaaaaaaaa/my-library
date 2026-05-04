@@ -12,7 +12,7 @@ import {
 } from "react-icons/fi"
 import { ActionIconButton } from "@/components/atoms/action-icon-button"
 import { useColorMode } from "@/components/ui/color-mode"
-import type { LibraryBook } from "@/types/reader"
+import type { LibraryBook, ReaderHighlight } from "@/types/reader"
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
@@ -21,6 +21,8 @@ const PAGE_TURN_COOLDOWN_MS = 260
 
 type ReaderPanelProps = {
   activeBook: LibraryBook | null
+  highlights: ReaderHighlight[]
+  onHighlightSelectionChange: (value: string) => void
   pageInput: string
   onPageInputChange: (value: string) => void
   onApplyPage: (rawValue: string) => void
@@ -31,6 +33,8 @@ type ReaderPanelProps = {
 
 export function ReaderPanel({
   activeBook,
+  highlights,
+  onHighlightSelectionChange,
   pageInput,
   onPageInputChange,
   onApplyPage,
@@ -80,6 +84,11 @@ export function ReaderPanel({
     const baseWidth = Math.floor(containerWidth * 0.88)
     return Math.max(260, Math.floor(baseWidth * (zoom / 100)))
   }, [containerWidth, zoom])
+
+  const pageHighlights = useMemo(
+    () => highlights.filter((highlight) => highlight.page === displayPage),
+    [highlights, displayPage],
+  )
 
   const activePdfBook = activeBook?.sourceUrl ? activeBook : null
   const lightPercent = Math.max(70, Math.min(130, Math.round(lightLevel)))
@@ -186,6 +195,44 @@ export function ReaderPanel({
     }
   }
 
+  const handleTextSelection = () => {
+    const selection = window.getSelection()
+    if (!selection) return
+
+    const text = selection.toString().replace(/\s+/g, " ").trim()
+    if (!text) {
+      onHighlightSelectionChange("")
+      return
+    }
+
+    if (!containerRef.current) return
+    if (selection.rangeCount === 0) return
+
+    const range = selection.getRangeAt(0)
+    if (!containerRef.current.contains(range.commonAncestorContainer)) {
+      return
+    }
+
+    onHighlightSelectionChange(text)
+  }
+
+  const customTextRenderer = useMemo(() => {
+    if (pageHighlights.length === 0) return undefined
+
+    const escapeRegExp = (value: string) =>
+      value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+    return ({ str }: { str: string }) => {
+      return pageHighlights.reduce((rendered, highlight) => {
+        const selectedText = highlight.text.trim()
+        if (!selectedText || selectedText.length < 2) return rendered
+
+        const pattern = new RegExp(`(${escapeRegExp(selectedText)})`, "gi")
+        return rendered.replace(pattern, '<mark class="pdf-highlight">$1</mark>')
+      }, str)
+    }
+  }, [pageHighlights])
+
   return (
     <main className="reader-panel">
       <header className="top-header">
@@ -270,6 +317,8 @@ export function ReaderPanel({
           ref={containerRef}
           className="reader-canvas"
           onScroll={handleScrollTriggerPageChange}
+          onMouseUp={handleTextSelection}
+          onKeyUp={handleTextSelection}
           onKeyDown={handleKeyChange}
           tabIndex={0}
           aria-label={`Leitor PDF de ${activeBook?.title ?? "biblioteca"}`}
@@ -302,7 +351,8 @@ export function ReaderPanel({
                   pageNumber={displayPage}
                   width={pageWidth}
                   renderAnnotationLayer={false}
-                  renderTextLayer={false}
+                  renderTextLayer
+                  customTextRenderer={customTextRenderer}
                   loading={
                     <div className="empty-reader-state">
                       <FiLoader className="spin-icon" />

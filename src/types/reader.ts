@@ -12,6 +12,12 @@ export type ReaderBookmark = {
   color: "blue" | "yellow" | "purple"
 }
 
+export type ReaderHighlight = {
+  id: string
+  page: number
+  text: string
+}
+
 export type LibraryBook = {
   id: string
   title: string
@@ -25,5 +31,6 @@ export type LibraryBook = {
   coverB: string
   notes: ReaderNote[]
   bookmarks: ReaderBookmark[]
+  highlights: ReaderHighlight[]
   hasPdf?: boolean
 }

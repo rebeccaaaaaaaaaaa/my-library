@@ -7,8 +7,10 @@ import type { LibraryBook } from "@/types/reader"
 type RightPanelProps = {
   activeBook: LibraryBook | null
   noteDraft: string
+  selectedHighlightText: string
   onNoteDraftChange: (value: string) => void
   onAddNote: () => void
+  onCreateNoteFromHighlight: () => void
   onRemoveNote: (noteId: string) => void
   onAddBookmark: (label: string) => void
   onRemoveBookmark: (bookmarkId: string) => void
@@ -18,8 +20,10 @@ type RightPanelProps = {
 export function RightPanel({
   activeBook,
   noteDraft,
+  selectedHighlightText,
   onNoteDraftChange,
   onAddNote,
+  onCreateNoteFromHighlight,
   onRemoveNote,
   onAddBookmark,
   onRemoveBookmark,
@@ -90,6 +94,15 @@ export function RightPanel({
           />
           <button onClick={onAddNote}>Salvar</button>
         </label>
+
+        {selectedHighlightText ? (
+          <div className="highlight-preview">
+            <p>{selectedHighlightText}</p>
+            <button type="button" onClick={onCreateNoteFromHighlight}>
+              Criar anotacao do destaque
+            </button>
+          </div>
+        ) : null}
 
         {visibleNotes.length > 0 ? (
           visibleNotes.map((note) => (

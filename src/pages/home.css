@@ -505,6 +505,12 @@
   border-radius: 8px;
 }
 
+.pdf-highlight {
+  background: rgba(255, 230, 120, 0.75);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 .empty-reader-state {
   width: 100%;
   height: 100%;
@@ -649,6 +655,35 @@
   height: 30px;
   padding: 0 10px;
   background: #5f51f3;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.highlight-preview {
+  border: 1px dashed #c8cfff;
+  background: #f8f8ff;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.highlight-preview p {
+  margin: 0;
+  color: #3a4160;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.highlight-preview button {
+  justify-self: end;
+  border: 0;
+  border-radius: 8px;
+  height: 30px;
+  padding: 0 10px;
+  background: #4f46e5;
   color: #fff;
   font-size: 12px;
   cursor: pointer;

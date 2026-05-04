@@ -22,6 +22,9 @@ function readStoredBooks(): LibraryBook[] {
   return stored.map((book) => ({
     ...book,
     isFavorite: Boolean(book.isFavorite),
+    notes: book.notes ?? [],
+    bookmarks: book.bookmarks ?? [],
+    highlights: book.highlights ?? [],
   }))
 }
 
@@ -38,6 +41,7 @@ function Home() {
     return String(stored[0]?.lastPage ?? 1)
   })
   const [noteDraft, setNoteDraft] = useState("")
+  const [selectedHighlightText, setSelectedHighlightText] = useState("")
 
   // Keep a ref so the unmount cleanup always sees fresh blob URLs
   const booksRef = useRef(books)
@@ -241,6 +245,51 @@ function Home() {
     setNoteDraft("")
   }
 
+  const createNoteFromHighlight = () => {
+    if (!activeBook) return
+
+    const selectedText = selectedHighlightText.trim()
+    if (!selectedText) return
+
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== activeBook.id) return book
+
+        const hasSameHighlight = book.highlights.some(
+          (highlight) =>
+            highlight.page === book.lastPage &&
+            highlight.text.toLowerCase() === selectedText.toLowerCase(),
+        )
+
+        return {
+          ...book,
+          highlights: hasSameHighlight
+            ? book.highlights
+            : [
+                ...book.highlights,
+                {
+                  id: makeId(),
+                  page: book.lastPage,
+                  text: selectedText,
+                },
+              ],
+          notes: [
+            {
+              id: makeId(),
+              page: book.lastPage,
+              text: selectedText,
+              date: new Date().toLocaleDateString("pt-BR"),
+            },
+            ...book.notes,
+          ],
+        }
+      }),
+    )
+
+    setSelectedHighlightText("")
+    window.getSelection()?.removeAllRanges()
+  }
+
   const removeNote = (noteId: string) => {
     if (!activeBook) return
 
@@ -280,6 +329,7 @@ function Home() {
       coverB: "#7c3aed",
       notes: [],
       bookmarks: [],
+      highlights: [],
       hasPdf: true,
     }
 
@@ -306,6 +356,8 @@ function Home() {
 
       <ReaderPanel
         activeBook={activeBook ?? null}
+        highlights={activeBook?.highlights ?? []}
+        onHighlightSelectionChange={setSelectedHighlightText}
         pageInput={pageInput}
         onPageInputChange={setPageInput}
         onApplyPage={applyPage}
@@ -317,8 +369,10 @@ function Home() {
       <RightPanel
         activeBook={activeBook ?? null}
         noteDraft={noteDraft}
+        selectedHighlightText={selectedHighlightText}
         onNoteDraftChange={setNoteDraft}
         onAddNote={addNote}
+        onCreateNoteFromHighlight={createNoteFromHighlight}
         onRemoveNote={removeNote}
         onAddBookmark={addBookmark}
         onRemoveBookmark={removeBookmark}
