@@ -3,7 +3,6 @@ import { FiMenu } from "react-icons/fi"
 import { LeftPanel } from "@/components/organisms/left-panel"
 import { ReaderPanel } from "@/components/organisms/reader-panel"
 import { RightPanel } from "@/components/organisms/right-panel"
-import { initialBooks } from "@/mocks/library"
 import type { LibraryBook } from "@/types/reader"
 import { clamp, makeId } from "@/utils/reader"
 import {
@@ -12,20 +11,19 @@ import {
   loadPdfUrl,
   saveBooks,
   savePdf,
+  deletePdf,
 } from "@/utils/storage"
 import "./home.css"
 
 function Home() {
-  const [books, setBooks] = useState<LibraryBook[]>(
-    () => loadBooks() ?? initialBooks,
-  )
+  const [books, setBooks] = useState<LibraryBook[]>(() => loadBooks() ?? [])
   const [activeBookId, setActiveBookId] = useState(
-    () => (loadBooks() ?? initialBooks)[0]?.id ?? "",
+    () => (loadBooks() ?? [])[0]?.id ?? "",
   )
   const [searchValue, setSearchValue] = useState("")
-  const [zoom, setZoom] = useState(100)
+  const [zoom, setZoom] = useState(50)
   const [pageInput, setPageInput] = useState(() => {
-    const stored = loadBooks() ?? initialBooks
+    const stored = loadBooks() ?? []
     return String(stored[0]?.lastPage ?? 1)
   })
   const [noteDraft, setNoteDraft] = useState("")
@@ -79,13 +77,14 @@ function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (!activeBook) return null
-
   const applyPage = (rawValue: string) => {
+    if (!activeBook) return
+
     const parsed = Number(rawValue)
     const nextPage = Number.isFinite(parsed)
       ? clamp(Math.round(parsed), 1, activeBook.totalPages)
       : activeBook.lastPage
+
 
     setPageInput(String(nextPage))
     setBooks((prev) =>
@@ -100,7 +99,60 @@ function Home() {
     )
   }
 
+  const deleteBook = async (bookId: string) => {
+    const bookToDelete = books.find((b) => b.id === bookId)
+    if (!bookToDelete) return
+
+    if (bookToDelete.sourceUrl) {
+      URL.revokeObjectURL(bookToDelete.sourceUrl)
+    }
+
+    if (bookToDelete.hasPdf) {
+      try {
+        await deletePdf(bookId)
+      } catch (e) {
+        console.error("Erro ao remover PDF do IndexedDB:", e)
+      }
+    }
+
+    const newBooks = books.filter((b) => b.id !== bookId)
+    setBooks(newBooks)
+
+    if (activeBookId === bookId) {
+      const nextActiveId = newBooks[0]?.id ?? ""
+      setActiveBookId(nextActiveId)
+      setPageInput(String(newBooks[0]?.lastPage ?? 1))
+    }
+  }
+
+  const onPdfLoad = (detectedTotalPages: number) => {
+    if (!activeBook) return
+
+    const normalizedTotal = Math.max(1, detectedTotalPages)
+    const nextPage = clamp(activeBook.lastPage, 1, normalizedTotal)
+
+    setPageInput(String(nextPage))
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== activeBook.id) return book
+
+        if (book.totalPages === normalizedTotal && book.lastPage === nextPage) {
+          return book
+        }
+
+        return {
+          ...book,
+          totalPages: normalizedTotal,
+          lastPage: nextPage,
+          progress: Math.round((nextPage / normalizedTotal) * 100),
+        }
+      }),
+    )
+  }
+
   const addBookmark = () => {
+    if (!activeBook) return
+
     setBooks((prev) =>
       prev.map((book) => {
         if (book.id !== activeBook.id) return book
@@ -121,6 +173,8 @@ function Home() {
   }
 
   const addNote = () => {
+    if (!activeBook) return
+
     const text = noteDraft.trim()
     if (!text) return
 
@@ -160,7 +214,7 @@ function Home() {
       id,
       title,
       author: "PDF enviado",
-      progress: 0,
+      progress: Math.round((1 / Math.max(1, totalPages)) * 100),
       lastPage: 1,
       totalPages,
       sourceUrl,
@@ -181,24 +235,26 @@ function Home() {
     <div className="reader-app">
       <LeftPanel
         onUploadPdf={onUploadPdf}
+        onDeleteBook={deleteBook}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         books={filteredBooks}
-        activeBookId={activeBook.id}
+        activeBookId={activeBook?.id ?? ""}
         onSelectBook={setActiveBookId}
       />
 
       <ReaderPanel
-        activeBook={activeBook}
+        activeBook={activeBook ?? null}
         pageInput={pageInput}
         onPageInputChange={setPageInput}
         onApplyPage={applyPage}
+        onPdfLoad={onPdfLoad}
         zoom={zoom}
         onZoomChange={setZoom}
       />
 
       <RightPanel
-        activeBook={activeBook}
+        activeBook={activeBook ?? null}
         pageInput={pageInput}
         noteDraft={noteDraft}
         onNoteDraftChange={setNoteDraft}

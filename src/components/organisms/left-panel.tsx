@@ -11,6 +11,7 @@ import type { LibraryBook } from "@/types/reader"
 
 type LeftPanelProps = {
   onUploadPdf: React.ChangeEventHandler<HTMLInputElement>
+  onDeleteBook: (bookId: string) => void
   searchValue: string
   onSearchChange: (value: string) => void
   books: LibraryBook[]
@@ -20,6 +21,7 @@ type LeftPanelProps = {
 
 export function LeftPanel({
   onUploadPdf,
+  onDeleteBook,
   searchValue,
   onSearchChange,
   books,
@@ -62,6 +64,7 @@ export function LeftPanel({
             book={book}
             selected={book.id === activeBookId}
             onSelect={onSelectBook}
+            onDelete={onDeleteBook}
           />
         ))}
       </div>

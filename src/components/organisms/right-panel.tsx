@@ -4,7 +4,7 @@ import { NoteCard } from "@/components/molecules/note-card"
 import type { LibraryBook } from "@/types/reader"
 
 type RightPanelProps = {
-  activeBook: LibraryBook
+  activeBook: LibraryBook | null
   pageInput: string
   noteDraft: string
   onNoteDraftChange: (value: string) => void
@@ -22,6 +22,19 @@ export function RightPanel({
   onAddBookmark,
   onApplyPage,
 }: RightPanelProps) {
+  if (!activeBook) {
+    return (
+      <aside className="right-panel">
+        <section className="info-card compact">
+          <div className="card-head">
+            <h3>Biblioteca vazia</h3>
+          </div>
+          <p>Envie seu primeiro PDF para comecar a leitura.</p>
+        </section>
+      </aside>
+    )
+  }
+
   return (
     <aside className="right-panel">
       <section className="info-card">

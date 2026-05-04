@@ -1,4 +1,5 @@
 import type { LibraryBook } from "@/types/reader"
+import { getDocument } from "pdfjs-dist"
 
 const DB_NAME = "bookly-db"
 const DB_VERSION = 1
@@ -76,14 +77,23 @@ export function saveBooks(books: LibraryBook[]): void {
 // ─── PDF utilities ─────────────────────────────────────────────────────────────
 
 /**
- * Reads the PDF binary and heuristically detects the page count by looking for
- * the /Count entry inside the document's page tree.
+ * Reads page count with pdf.js for reliable progress calculation.
+ * Falls back to heuristic parsing if the worker/parser fails.
  */
 export async function getPdfPageCount(file: File): Promise<number> {
   const buffer = await file.arrayBuffer()
-  const text = new TextDecoder("latin1").decode(buffer)
-  const matches = [...text.matchAll(/\/Count\s+(\d+)/g)]
-  if (matches.length === 0) return 1
-  const counts = matches.map((m) => parseInt(m[1], 10))
-  return Math.max(...counts)
+
+  try {
+    const loadingTask = getDocument({ data: buffer })
+    const pdf = await loadingTask.promise
+    const pages = pdf.numPages
+    await pdf.destroy()
+    return Math.max(1, pages)
+  } catch {
+    const text = new TextDecoder("latin1").decode(buffer)
+    const matches = [...text.matchAll(/\/Count\s+(\d+)/g)]
+    if (matches.length === 0) return 1
+    const counts = matches.map((m) => parseInt(m[1], 10))
+    return Math.max(1, ...counts)
+  }
 }

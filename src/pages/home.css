@@ -132,6 +132,7 @@
   padding: 10px;
   cursor: pointer;
   text-align: left;
+  position: relative;
 }
 
 .book-card.is-selected {
@@ -166,6 +167,35 @@
   font-size: 12px;
   color: #61667a;
   font-weight: 600;
+}
+
+.book-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 59, 48, 0.9);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.book-card:hover .book-delete-btn,
+.book-card:focus-within .book-delete-btn {
+  opacity: 1;
+}
+
+.book-delete-btn:hover {
+  background: rgba(255, 59, 48, 1);
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);
 }
 
 .progress-line {
@@ -334,14 +364,33 @@
   background: #f6f7fb;
   border: 1px solid #e7e8f0;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: auto;
   box-shadow: 0 10px 24px rgba(37, 40, 60, 0.06);
+  display: grid;
+  place-items: start center;
+  outline: none;
 }
 
-.pdf-frame {
+.reader-canvas:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(95, 81, 243, 0.3),
+    0 10px 24px rgba(37, 40, 60, 0.06);
+}
+
+.pdf-document {
+  min-height: 100%;
   width: 100%;
-  height: 100%;
-  border: 0;
+  display: grid;
+  place-items: start center;
+  padding: 22px 10px;
+}
+
+.pdf-page {
+  box-shadow: 0 14px 28px rgba(32, 36, 58, 0.12);
+}
+
+.pdf-page canvas {
+  border-radius: 8px;
 }
 
 .empty-reader-state {
