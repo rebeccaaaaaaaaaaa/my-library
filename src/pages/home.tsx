@@ -176,8 +176,11 @@ function Home() {
     )
   }
 
-  const addBookmark = () => {
+  const addBookmark = (label: string) => {
     if (!activeBook) return
+
+    const parsedLabel = label.trim()
+    if (!parsedLabel) return
 
     setBooks((prev) =>
       prev.map((book) => {
@@ -189,10 +192,24 @@ function Home() {
             {
               id: makeId(),
               page: book.lastPage,
-              label: `Marcador na pagina ${book.lastPage}`,
+              label: parsedLabel,
               color: "blue",
             },
           ],
+        }
+      }),
+    )
+  }
+
+  const removeBookmark = (bookmarkId: string) => {
+    if (!activeBook) return
+
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== activeBook.id) return book
+        return {
+          ...book,
+          bookmarks: book.bookmarks.filter((bookmark) => bookmark.id !== bookmarkId),
         }
       }),
     )
@@ -304,6 +321,7 @@ function Home() {
         onAddNote={addNote}
         onRemoveNote={removeNote}
         onAddBookmark={addBookmark}
+        onRemoveBookmark={removeBookmark}
         onApplyPage={applyPage}
       />
 

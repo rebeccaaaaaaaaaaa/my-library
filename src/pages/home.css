@@ -729,6 +729,34 @@
   gap: 8px;
 }
 
+.bookmark-input-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.bookmark-input-wrap input {
+  border: 1px solid #e2e5f1;
+  border-radius: 8px;
+  padding: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #2b3144;
+  font-family: inherit;
+}
+
+.bookmark-input-wrap button {
+  border: 0;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  background: #5f51f3;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .bookmark-item {
   width: 100%;
   border: 1px solid #eceef5;
@@ -740,6 +768,7 @@
   padding: 8px;
   cursor: pointer;
   text-align: left;
+  position: relative;
 }
 
 .bookmark-dot {
@@ -771,6 +800,33 @@
 .bookmark-item span {
   color: #777f95;
   font-size: 12px;
+}
+
+.bookmark-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #d94135;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.bookmark-item:hover .bookmark-delete-btn,
+.bookmark-item:focus-within .bookmark-delete-btn {
+  opacity: 1;
+}
+
+.bookmark-delete-btn:hover {
+  background: rgba(255, 59, 48, 0.2);
 }
 
 .quick-action {

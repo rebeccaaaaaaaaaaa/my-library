@@ -10,7 +10,8 @@ type RightPanelProps = {
   onNoteDraftChange: (value: string) => void
   onAddNote: () => void
   onRemoveNote: (noteId: string) => void
-  onAddBookmark: () => void
+  onAddBookmark: (label: string) => void
+  onRemoveBookmark: (bookmarkId: string) => void
   onApplyPage: (rawValue: string) => void
 }
 
@@ -21,9 +22,12 @@ export function RightPanel({
   onAddNote,
   onRemoveNote,
   onAddBookmark,
+  onRemoveBookmark,
   onApplyPage,
 }: RightPanelProps) {
   const [showAllNotes, setShowAllNotes] = useState(false)
+  const [showAllBookmarks, setShowAllBookmarks] = useState(false)
+  const [bookmarkDraft, setBookmarkDraft] = useState("")
 
   if (!activeBook) {
     return (
@@ -40,6 +44,10 @@ export function RightPanel({
 
   const hasMoreThanPreview = activeBook.notes.length > 2
   const visibleNotes = showAllNotes ? activeBook.notes : activeBook.notes.slice(0, 2)
+  const hasMoreBookmarksThanPreview = activeBook.bookmarks.length > 3
+  const visibleBookmarks = showAllBookmarks
+    ? activeBook.bookmarks
+    : activeBook.bookmarks.slice(0, 3)
 
   return (
     <aside className="right-panel">
@@ -100,23 +108,51 @@ export function RightPanel({
       <section className="info-card">
         <div className="card-head">
           <h3>Marcadores</h3>
-          <a href="#">Ver todos</a>
+          {hasMoreBookmarksThanPreview ? (
+            <button
+              type="button"
+              className="card-link-btn"
+              onClick={() => setShowAllBookmarks((prev) => !prev)}
+            >
+              {showAllBookmarks ? "Ver menos" : "Ver todos"}
+            </button>
+          ) : null}
         </div>
 
-        <button type="button" className="quick-action" onClick={onAddBookmark}>
-          Adicionar marcador na pagina atual
-        </button>
+        <label className="bookmark-input-wrap">
+          <input
+            value={bookmarkDraft}
+            onChange={(event) => setBookmarkDraft(event.target.value)}
+            placeholder={`Nome do marcador na pagina ${activeBook.lastPage}`}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const parsed = bookmarkDraft.trim()
+              if (!parsed) return
+              onAddBookmark(parsed)
+              setBookmarkDraft("")
+            }}
+          >
+            Salvar marcador
+          </button>
+        </label>
 
-        <ul className="bookmark-list">
-          {activeBook.bookmarks.map((bookmark) => (
-            <li key={bookmark.id}>
-              <BookmarkItem
-                bookmark={bookmark}
-                onJump={(page) => onApplyPage(String(page))}
-              />
-            </li>
-          ))}
-        </ul>
+        {visibleBookmarks.length > 0 ? (
+          <ul className="bookmark-list">
+            {visibleBookmarks.map((bookmark) => (
+              <li key={bookmark.id}>
+                <BookmarkItem
+                  bookmark={bookmark}
+                  onJump={(page) => onApplyPage(String(page))}
+                  onRemove={(bookmarkId) => onRemoveBookmark(bookmarkId)}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="notes-empty">Sem marcadores ainda.</p>
+        )}
       </section>
 
 
