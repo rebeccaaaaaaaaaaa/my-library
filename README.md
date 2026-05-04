@@ -67,6 +67,18 @@ Aplicação de leitura de PDFs com biblioteca pessoal persistente, anotações, 
 
 ---
 
+## Deploy & Integração Contínua
+
+O projeto está configurado com um pipeline automatizado de qualidade e deploy:
+
+- **GitHub Actions**: A cada push ou pull request, um workflow valida a qualidade do código via `npm run lint` e compila a versão de produção com `npm run build`.
+- **Netlify**: Após o sucesso do CI na branch `main`, a aplicação é automaticamente deployada em produção, garantindo que atualizações vão ao ar sem intervenção manual.
+- **SPA Redirects**: Configuração automática para Single Page Application, com fallback para `index.html` em todas as rotas.
+
+Resultado: código testado, build validado e versão nova em produção em minutos, sem downtime.
+
+---
+
 ## Estrutura do Projeto
 
 ```
