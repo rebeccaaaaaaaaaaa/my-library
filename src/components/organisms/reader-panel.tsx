@@ -6,6 +6,7 @@ import {
   FiFileText,
   FiList,
   FiLoader,
+  FiMaximize2,
   FiMoon,
   FiSearch,
   FiSun,
@@ -13,9 +14,13 @@ import {
   FiUser,
 } from "react-icons/fi"
 import { ActionIconButton } from "@/components/atoms/action-icon-button"
+import { useColorMode } from "@/components/ui/color-mode"
 import type { LibraryBook } from "@/types/reader"
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
+
+const READER_LIGHT_LEVEL_KEY = "reader-light-level"
+const PAGE_TURN_COOLDOWN_MS = 260
 
 type ReaderPanelProps = {
   activeBook: LibraryBook | null
@@ -36,9 +41,29 @@ export function ReaderPanel({
   zoom,
   onZoomChange,
 }: ReaderPanelProps) {
+  const { colorMode, setColorMode } = useColorMode()
   const containerRef = useRef<HTMLDivElement>(null)
+  const transitionTimeoutRef = useRef<number | undefined>(undefined)
+  const pageTurnTimeoutRef = useRef<number | undefined>(undefined)
+  const isPageTurnLockedRef = useRef(false)
+  const renderedBookIdRef = useRef<string | null>(null)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [lightLevel, setLightLevel] = useState(100)
+  const [displayPage, setDisplayPage] = useState(1)
+  const [isPageTransitioning, setIsPageTransitioning] = useState(false)
   const lastScrollRef = useRef(0)
+
+  useEffect(() => {
+    const raw = localStorage.getItem(READER_LIGHT_LEVEL_KEY)
+    if (!raw) return
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed)) return
+    setLightLevel(Math.max(70, Math.min(130, Math.round(parsed))))
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(READER_LIGHT_LEVEL_KEY, String(lightLevel))
+  }, [lightLevel])
 
   useEffect(() => {
     const element = containerRef.current
@@ -60,6 +85,62 @@ export function ReaderPanel({
   }, [containerWidth, zoom])
 
   const activePdfBook = activeBook?.sourceUrl ? activeBook : null
+  const lightPercent = Math.max(70, Math.min(130, Math.round(lightLevel)))
+
+  useEffect(() => {
+    return () => {
+      if (pageTurnTimeoutRef.current) {
+        window.clearTimeout(pageTurnTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const lockPageTurn = () => {
+    isPageTurnLockedRef.current = true
+    if (pageTurnTimeoutRef.current) {
+      window.clearTimeout(pageTurnTimeoutRef.current)
+    }
+    pageTurnTimeoutRef.current = window.setTimeout(() => {
+      isPageTurnLockedRef.current = false
+    }, PAGE_TURN_COOLDOWN_MS)
+  }
+
+  const changePageBy = (delta: number) => {
+    if (!activeBook || !activePdfBook || delta === 0) return
+    onApplyPage(String(activeBook.lastPage + delta))
+    lockPageTurn()
+  }
+
+  useEffect(() => {
+    if (!activePdfBook) {
+      renderedBookIdRef.current = null
+      setDisplayPage(1)
+      setIsPageTransitioning(false)
+      return
+    }
+
+    const isDifferentBook = renderedBookIdRef.current !== activePdfBook.id
+    if (isDifferentBook) {
+      renderedBookIdRef.current = activePdfBook.id
+      setDisplayPage(activePdfBook.lastPage)
+      setIsPageTransitioning(false)
+      return
+    }
+
+    if (displayPage === activePdfBook.lastPage) return
+
+    setIsPageTransitioning(true)
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      setDisplayPage(activePdfBook.lastPage)
+      setIsPageTransitioning(false)
+    }, 140)
+
+    return () => {
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current)
+      }
+    }
+  }, [activePdfBook, displayPage])
 
   const handleScrollTriggerPageChange: React.UIEventHandler<HTMLDivElement> = (event) => {
     if (!activeBook || !activePdfBook) return
@@ -71,11 +152,16 @@ export function ReaderPanel({
     const wasScrollingDown = currentScroll > lastScrollRef.current
     const wasScrollingUp = currentScroll < lastScrollRef.current
 
+    if (isPageTurnLockedRef.current || isPageTransitioning) {
+      lastScrollRef.current = currentScroll
+      return
+    }
+
     lastScrollRef.current = currentScroll
 
     // Próxima página: scroll para baixo no final
     if (wasScrollingDown && isAtBottom && activeBook.lastPage < activeBook.totalPages) {
-      onApplyPage(String(activeBook.lastPage + 1))
+      changePageBy(1)
       el.scrollTop = 0
       lastScrollRef.current = 0
       return
@@ -83,7 +169,7 @@ export function ReaderPanel({
 
     // Página anterior: scroll para cima no topo
     if (wasScrollingUp && isAtTop && activeBook.lastPage > 1) {
-      onApplyPage(String(activeBook.lastPage - 1))
+      changePageBy(-1)
       el.scrollTop = el.scrollHeight
       lastScrollRef.current = el.scrollHeight
     }
@@ -94,12 +180,12 @@ export function ReaderPanel({
 
     if (event.key === "ArrowRight" || event.key === "PageDown") {
       event.preventDefault()
-      onApplyPage(String(activeBook.lastPage + 1))
+      changePageBy(1)
     }
 
     if (event.key === "ArrowLeft" || event.key === "PageUp") {
       event.preventDefault()
-      onApplyPage(String(activeBook.lastPage - 1))
+      changePageBy(-1)
     }
   }
 
@@ -121,10 +207,20 @@ export function ReaderPanel({
           <ActionIconButton>
             <FiList />
           </ActionIconButton>
-          <ActionIconButton>
+          <ActionIconButton
+            onClick={() => setColorMode("light")}
+            ariaLabel="Ativar tema claro"
+            title="Tema claro"
+            className={colorMode === "light" ? "is-active" : undefined}
+          >
             <FiSun />
           </ActionIconButton>
-          <ActionIconButton>
+          <ActionIconButton
+            onClick={() => setColorMode("dark")}
+            ariaLabel="Ativar tema escuro"
+            title="Tema escuro"
+            className={colorMode === "dark" ? "is-active" : undefined}
+          >
             <FiMoon />
           </ActionIconButton>
           <span className="avatar-badge">
@@ -166,6 +262,19 @@ export function ReaderPanel({
           </button>
           <span>{zoom}%</span>
         </div>
+
+        <div className="light-control">
+          <FiMaximize2 aria-hidden="true" />
+          <input
+            type="range"
+            min={70}
+            max={130}
+            value={lightPercent}
+            onChange={(event) => setLightLevel(Number(event.target.value))}
+            aria-label="Ajustar iluminacao do leitor"
+          />
+          <strong>{lightPercent}%</strong>
+        </div>
       </section>
 
       <section className="reader-canvas-wrap">
@@ -178,38 +287,43 @@ export function ReaderPanel({
           aria-label={`Leitor PDF de ${activeBook?.title ?? "biblioteca"}`}
         >
           {activePdfBook ? (
-            <Document
-              key={activePdfBook.id}
-              file={activePdfBook.sourceUrl}
-              className="pdf-document"
-              loading={
-                <div className="empty-reader-state">
-                  <FiLoader className="spin-icon" />
-                  <p>Carregando PDF...</p>
-                </div>
-              }
-              error={
-                <div className="empty-reader-state">
-                  <FiFileText />
-                  <p>Nao foi possivel renderizar este PDF.</p>
-                </div>
-              }
-              onLoadSuccess={({ numPages }) => onPdfLoad(numPages)}
+            <div
+              className={`pdf-light-stage ${isPageTransitioning ? "is-page-changing" : ""}`}
+              style={{ filter: `brightness(${lightPercent}%)` }}
             >
-              <Page
-                className="pdf-page"
-                pageNumber={activePdfBook.lastPage}
-                width={pageWidth}
-                renderAnnotationLayer={false}
-                renderTextLayer={false}
+              <Document
+                key={activePdfBook.id}
+                file={activePdfBook.sourceUrl}
+                className="pdf-document"
                 loading={
                   <div className="empty-reader-state">
                     <FiLoader className="spin-icon" />
-                    <p>Renderizando pagina...</p>
+                    <p>Carregando PDF...</p>
                   </div>
                 }
-              />
-            </Document>
+                error={
+                  <div className="empty-reader-state">
+                    <FiFileText />
+                    <p>Nao foi possivel renderizar este PDF.</p>
+                  </div>
+                }
+                onLoadSuccess={({ numPages }) => onPdfLoad(numPages)}
+              >
+                <Page
+                  className="pdf-page"
+                  pageNumber={displayPage}
+                  width={pageWidth}
+                  renderAnnotationLayer={false}
+                  renderTextLayer={false}
+                  loading={
+                    <div className="empty-reader-state">
+                      <FiLoader className="spin-icon" />
+                      <p>Renderizando pagina...</p>
+                    </div>
+                  }
+                />
+              </Document>
+            </div>
           ) : activeBook?.hasPdf ? (
             <div className="empty-reader-state">
               <FiLoader className="spin-icon" />
