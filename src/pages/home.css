@@ -505,10 +505,26 @@
   border-radius: 8px;
 }
 
+/* Text layer: spans ficam sobre o canvas para permitir seleção */
+.react-pdf__Page__textContent {
+  user-select: text !important;
+  cursor: text;
+}
+
+.react-pdf__Page__textContent span {
+  color: transparent;
+}
+
+.react-pdf__Page__textContent span::selection {
+  background: rgba(100, 140, 255, 0.35);
+  color: transparent;
+}
+
 .pdf-highlight {
-  background: rgba(255, 230, 120, 0.75);
+  background: rgba(255, 220, 60, 0.7);
   border-radius: 2px;
   padding: 0 1px;
+  color: transparent;
 }
 
 .empty-reader-state {
