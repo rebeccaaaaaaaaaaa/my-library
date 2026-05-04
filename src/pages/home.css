@@ -580,6 +580,15 @@
   font-weight: 600;
 }
 
+.card-link-btn {
+  border: 0;
+  background: transparent;
+  color: #5f51f3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .progress-percent {
   margin: 2px 0 8px;
   color: #585f74;
@@ -653,6 +662,7 @@
   margin-top: 10px;
   display: grid;
   gap: 8px;
+  position: relative;
 }
 
 .note-card p {
@@ -666,6 +676,49 @@
   justify-content: space-between;
   color: #777f95;
   font-size: 12px;
+}
+
+.notes-empty {
+  margin-top: 10px;
+  margin-bottom: 0;
+  color: #7a8196;
+  font-size: 13px;
+}
+
+.note-link-btn {
+  border: 0;
+  background: transparent;
+  color: #5f51f3;
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.note-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #d94135;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.note-card:hover .note-delete-btn,
+.note-card:focus-within .note-delete-btn {
+  opacity: 1;
+}
+
+.note-delete-btn:hover {
+  background: rgba(255, 59, 48, 0.2);
 }
 
 .bookmark-list {

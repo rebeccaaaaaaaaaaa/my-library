@@ -224,6 +224,20 @@ function Home() {
     setNoteDraft("")
   }
 
+  const removeNote = (noteId: string) => {
+    if (!activeBook) return
+
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== activeBook.id) return book
+        return {
+          ...book,
+          notes: book.notes.filter((note) => note.id !== noteId),
+        }
+      }),
+    )
+  }
+
   const onUploadPdf: React.ChangeEventHandler<HTMLInputElement> = async (
     event,
   ) => {
@@ -285,10 +299,10 @@ function Home() {
 
       <RightPanel
         activeBook={activeBook ?? null}
-        pageInput={pageInput}
         noteDraft={noteDraft}
         onNoteDraftChange={setNoteDraft}
         onAddNote={addNote}
+        onRemoveNote={removeNote}
         onAddBookmark={addBookmark}
         onApplyPage={applyPage}
       />

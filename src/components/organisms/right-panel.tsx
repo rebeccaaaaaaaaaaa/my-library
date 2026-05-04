@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { ProgressBar } from "@/components/atoms/progress-bar"
 import { BookmarkItem } from "@/components/molecules/bookmark-item"
 import { NoteCard } from "@/components/molecules/note-card"
@@ -5,23 +6,25 @@ import type { LibraryBook } from "@/types/reader"
 
 type RightPanelProps = {
   activeBook: LibraryBook | null
-  pageInput: string
   noteDraft: string
   onNoteDraftChange: (value: string) => void
   onAddNote: () => void
+  onRemoveNote: (noteId: string) => void
   onAddBookmark: () => void
   onApplyPage: (rawValue: string) => void
 }
 
 export function RightPanel({
   activeBook,
-  pageInput,
   noteDraft,
   onNoteDraftChange,
   onAddNote,
+  onRemoveNote,
   onAddBookmark,
   onApplyPage,
 }: RightPanelProps) {
+  const [showAllNotes, setShowAllNotes] = useState(false)
+
   if (!activeBook) {
     return (
       <aside className="right-panel">
@@ -34,6 +37,9 @@ export function RightPanel({
       </aside>
     )
   }
+
+  const hasMoreThanPreview = activeBook.notes.length > 2
+  const visibleNotes = showAllNotes ? activeBook.notes : activeBook.notes.slice(0, 2)
 
   return (
     <aside className="right-panel">
@@ -57,7 +63,15 @@ export function RightPanel({
       <section className="info-card">
         <div className="card-head">
           <h3>Anotacoes</h3>
-          <a href="#">Ver todas</a>
+          {hasMoreThanPreview ? (
+            <button
+              type="button"
+              className="card-link-btn"
+              onClick={() => setShowAllNotes((prev) => !prev)}
+            >
+              {showAllNotes ? "Ver menos" : "Ver todas"}
+            </button>
+          ) : null}
         </div>
 
         <label className="note-input-wrap">
@@ -69,9 +83,18 @@ export function RightPanel({
           <button onClick={onAddNote}>Salvar</button>
         </label>
 
-        {activeBook.notes.slice(0, 2).map((note) => (
-          <NoteCard key={note.id} note={note} />
-        ))}
+        {visibleNotes.length > 0 ? (
+          visibleNotes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onJump={(page) => onApplyPage(String(page))}
+              onDelete={(noteId) => onRemoveNote(noteId)}
+            />
+          ))
+        ) : (
+          <p className="notes-empty">Sem anotacoes ainda.</p>
+        )}
       </section>
 
       <section className="info-card">
@@ -79,6 +102,10 @@ export function RightPanel({
           <h3>Marcadores</h3>
           <a href="#">Ver todos</a>
         </div>
+
+        <button type="button" className="quick-action" onClick={onAddBookmark}>
+          Adicionar marcador na pagina atual
+        </button>
 
         <ul className="bookmark-list">
           {activeBook.bookmarks.map((bookmark) => (
@@ -92,20 +119,7 @@ export function RightPanel({
         </ul>
       </section>
 
-      <section className="info-card compact">
-        <div className="card-head">
-          <h3>Acoes rapidas</h3>
-        </div>
-        <button className="quick-action" onClick={() => onApplyPage(pageInput)}>
-          Ir para pagina
-        </button>
-        <button className="quick-action" onClick={onAddBookmark}>
-          Adicionar marcador
-        </button>
-        <button className="quick-action" onClick={onAddNote}>
-          Salvar anotacao
-        </button>
-      </section>
+
     </aside>
   )
 }

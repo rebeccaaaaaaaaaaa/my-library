@@ -2,13 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import pdfWorkerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import {
-  FiBookmark,
   FiFileText,
-  FiList,
   FiLoader,
   FiMaximize2,
   FiMoon,
-  FiSearch,
   FiSun,
   FiUpload,
   FiUser,
