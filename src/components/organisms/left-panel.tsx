@@ -4,16 +4,18 @@ import {
   FiClock,
   FiPlus,
   FiSearch,
-  FiUpload,
+  FiTrash2,
 } from "react-icons/fi"
 import { BookCard } from "@/components/molecules/book-card"
 import type { LibraryBook } from "@/types/reader"
 
-type LibraryFilter = "all" | "favorites"
+type LibraryFilter = "all" | "favorites" | "trash"
 
 type LeftPanelProps = {
   onUploadPdf: React.ChangeEventHandler<HTMLInputElement>
   onDeleteBook: (bookId: string) => void
+  onPermanentDeleteBook: (bookId: string) => void
+  onRestoreBook: (bookId: string) => void
   onToggleFavorite: (bookId: string, e: React.MouseEvent) => void
   activeFilter: LibraryFilter
   onFilterChange: (filter: LibraryFilter) => void
@@ -27,6 +29,8 @@ type LeftPanelProps = {
 export function LeftPanel({
   onUploadPdf,
   onDeleteBook,
+  onPermanentDeleteBook,
+  onRestoreBook,
   onToggleFavorite,
   activeFilter,
   onFilterChange,
@@ -71,10 +75,19 @@ export function LeftPanel({
             key={book.id}
             book={book}
             selected={book.id === activeBookId}
+            inTrash={activeFilter === "trash"}
             onSelect={onSelectBook}
             onDelete={(bookId, e) => {
               e.stopPropagation()
               onDeleteBook(bookId)
+            }}
+            onRestore={(bookId, e) => {
+              e.stopPropagation()
+              onRestoreBook(bookId)
+            }}
+            onPermanentDelete={(bookId, e) => {
+              e.stopPropagation()
+              onPermanentDeleteBook(bookId)
             }}
             onToggleFavorite={(bookId, e) => {
               e.stopPropagation()
@@ -99,8 +112,11 @@ export function LeftPanel({
           <FiBookmark />
           Favoritos
         </button>
-        <button className="menu-item">
-          <FiUpload />
+        <button
+          className={`menu-item ${activeFilter === "trash" ? "active" : ""}`}
+          onClick={() => onFilterChange("trash")}
+        >
+          <FiTrash2 />
           Lixeira
         </button>
       </div>

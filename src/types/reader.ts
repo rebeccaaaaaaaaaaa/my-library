@@ -28,6 +28,7 @@ export type LibraryBook = {
   title: string
   author: string
   isFavorite: boolean
+  deletedAt?: string
   progress: number
   lastPage: number
   totalPages: number

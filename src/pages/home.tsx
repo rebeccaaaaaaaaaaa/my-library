@@ -15,7 +15,7 @@ import {
 } from "@/utils/storage"
 import "./home.css"
 
-type LibraryFilter = "all" | "favorites"
+type LibraryFilter = "all" | "favorites" | "trash"
 
 function getDayKey(date = new Date()): string {
   return date.toISOString().slice(0, 10)
@@ -35,13 +35,27 @@ function readStoredBooks(): LibraryBook[] {
     highlights: book.highlights ?? [],
     dailyGoal: normalizeDailyGoal(book.dailyGoal ?? 12),
     readingStats: book.readingStats ?? [],
+    deletedAt: book.deletedAt,
   }))
+}
+
+function filterBooksByView(books: LibraryBook[], filter: LibraryFilter): LibraryBook[] {
+  if (filter === "trash") {
+    return books.filter((book) => Boolean(book.deletedAt))
+  }
+
+  const activeBooks = books.filter((book) => !book.deletedAt)
+  if (filter === "favorites") {
+    return activeBooks.filter((book) => book.isFavorite)
+  }
+
+  return activeBooks
 }
 
 function Home() {
   const [books, setBooks] = useState<LibraryBook[]>(() => readStoredBooks())
   const [activeBookId, setActiveBookId] = useState(
-    () => readStoredBooks()[0]?.id ?? "",
+    () => filterBooksByView(readStoredBooks(), "all")[0]?.id ?? "",
   )
   const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all")
   const [searchValue, setSearchValue] = useState("")
@@ -56,16 +70,8 @@ function Home() {
   // Keep a ref so the unmount cleanup always sees fresh blob URLs
   const booksRef = useRef(books)
 
-  const activeBook = useMemo(
-    () => books.find((book) => book.id === activeBookId) ?? books[0],
-    [activeBookId, books],
-  )
-
   const filteredBooks = useMemo(() => {
-    const sourceBooks =
-      libraryFilter === "favorites"
-        ? books.filter((book) => book.isFavorite)
-        : books
+    const sourceBooks = filterBooksByView(books, libraryFilter)
 
     if (!searchValue.trim()) return sourceBooks
     const term = searchValue.toLowerCase()
@@ -75,6 +81,11 @@ function Home() {
         book.author.toLowerCase().includes(term),
     )
   }, [books, searchValue, libraryFilter])
+
+  const activeBook = useMemo(
+    () => filteredBooks.find((book) => book.id === activeBookId) ?? filteredBooks[0],
+    [activeBookId, filteredBooks],
+  )
 
   useEffect(() => {
     booksRef.current = books
@@ -160,7 +171,7 @@ function Home() {
     )
   }
 
-  const deleteBook = async (bookId: string) => {
+  const deleteBookPermanently = async (bookId: string) => {
     const bookToDelete = books.find((b) => b.id === bookId)
     if (!bookToDelete) return
 
@@ -184,6 +195,51 @@ function Home() {
       setActiveBookId(nextActiveId)
       setPageInput(String(newBooks[0]?.lastPage ?? 1))
     }
+  }
+
+  const moveBookToTrash = (bookId: string) => {
+    const trashedAt = new Date().toISOString()
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== bookId || book.deletedAt) return book
+        return {
+          ...book,
+          deletedAt: trashedAt,
+          isFavorite: false,
+        }
+      }),
+    )
+
+    if (activeBookId === bookId) {
+      const nextBooks = filterBooksByView(
+        books
+          .map((book) =>
+            book.id === bookId
+              ? {
+                  ...book,
+                  deletedAt: trashedAt,
+                  isFavorite: false,
+                }
+              : book,
+          ),
+        libraryFilter,
+      )
+      const nextBook = nextBooks[0]
+      setActiveBookId(nextBook?.id ?? "")
+      setPageInput(String(nextBook?.lastPage ?? 1))
+    }
+  }
+
+  const restoreBook = (bookId: string) => {
+    setBooks((prev) =>
+      prev.map((book) => {
+        if (book.id !== bookId || !book.deletedAt) return book
+        return {
+          ...book,
+          deletedAt: undefined,
+        }
+      }),
+    )
   }
 
   const onPdfLoad = (detectedTotalPages: number) => {
@@ -386,10 +442,19 @@ function Home() {
     <div className="reader-app">
       <LeftPanel
         onUploadPdf={onUploadPdf}
-        onDeleteBook={deleteBook}
+        onDeleteBook={moveBookToTrash}
+        onPermanentDeleteBook={deleteBookPermanently}
+        onRestoreBook={restoreBook}
         onToggleFavorite={toggleFavorite}
         activeFilter={libraryFilter}
-        onFilterChange={setLibraryFilter}
+        onFilterChange={(filter) => {
+          setLibraryFilter(filter)
+          const nextBooks = filterBooksByView(books, filter)
+          const nextBook = nextBooks.find((book) => book.id === activeBookId) ?? nextBooks[0]
+          setActiveBookId(nextBook?.id ?? "")
+          setPageInput(String(nextBook?.lastPage ?? 1))
+          setSelectedHighlightText("")
+        }}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         books={filteredBooks}
