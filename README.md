@@ -42,6 +42,7 @@ Aplicação de leitura de PDFs com biblioteca pessoal persistente, anotações, 
 - Previa do trecho selecionado no painel lateral
 - Criacao de nota a partir do destaque com um clique
 - Destaque armazenado junto ao livro para referencia futura
+- Explicacao com IA para o trecho selecionado (MVP)
 
 ### Metas e acompanhamento de leitura
 - Configuracao de meta diaria de paginas por livro
@@ -115,3 +116,17 @@ npm run preview
 # Linting
 npm run lint
 ```
+
+## Configuracao de IA (MVP)
+
+Para habilitar o botao "Explicar com IA" no painel de anotacoes, crie um arquivo `.env` na raiz do projeto com:
+
+```bash
+VITE_OPENAI_API_KEY=sua_chave_aqui
+VITE_OPENAI_MODEL=gpt-4o-mini
+VITE_OPENAI_BASE_URL=https://api.openai.com/v1
+```
+
+Observacoes:
+- Sem `VITE_OPENAI_API_KEY`, a funcionalidade exibe mensagem de configuracao ausente.
+- Este MVP chama a API diretamente do cliente. Para producao, o ideal e mover a chamada para um backend/proxy.

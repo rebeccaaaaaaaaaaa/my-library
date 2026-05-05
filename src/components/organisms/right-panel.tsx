@@ -64,9 +64,13 @@ type RightPanelProps = {
   activeBook: LibraryBook | null
   noteDraft: string
   selectedHighlightText: string
+  isExplainingHighlight: boolean
+  highlightExplanation: string
+  highlightExplanationError: string
   onNoteDraftChange: (value: string) => void
   onAddNote: () => void
   onCreateNoteFromHighlight: () => void
+  onExplainHighlight: () => void
   onRemoveNote: (noteId: string) => void
   onAddBookmark: (label: string) => void
   onRemoveBookmark: (bookmarkId: string) => void
@@ -78,9 +82,13 @@ export function RightPanel({
   activeBook,
   noteDraft,
   selectedHighlightText,
+  isExplainingHighlight,
+  highlightExplanation,
+  highlightExplanationError,
   onNoteDraftChange,
   onAddNote,
   onCreateNoteFromHighlight,
+  onExplainHighlight,
   onRemoveNote,
   onAddBookmark,
   onRemoveBookmark,
@@ -194,9 +202,30 @@ export function RightPanel({
         {selectedHighlightText ? (
           <div className="highlight-preview">
             <p>{selectedHighlightText}</p>
-            <button type="button" onClick={onCreateNoteFromHighlight}>
-              Criar anotacao do destaque
-            </button>
+            <div className="highlight-actions">
+              <button type="button" onClick={onCreateNoteFromHighlight}>
+                Criar anotacao do destaque
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={onExplainHighlight}
+                disabled={isExplainingHighlight}
+              >
+                {isExplainingHighlight ? "Gerando explicacao..." : "Explicar com IA"}
+              </button>
+            </div>
+
+            {highlightExplanationError ? (
+              <p className="highlight-ai-error">{highlightExplanationError}</p>
+            ) : null}
+
+            {highlightExplanation ? (
+              <div className="highlight-ai-result">
+                <strong>Explicacao da IA</strong>
+                <p>{highlightExplanation}</p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

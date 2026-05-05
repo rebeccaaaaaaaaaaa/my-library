@@ -5,6 +5,7 @@ import { ReaderPanel } from "@/components/organisms/reader-panel"
 import { RightPanel } from "@/components/organisms/right-panel"
 import type { LibraryBook } from "@/types/reader"
 import { clamp, makeId } from "@/utils/reader"
+import { explainSelectedTextWithAi } from "@/utils/ai"
 import {
   getPdfCoverImage,
   getPdfPageCount,
@@ -68,6 +69,9 @@ function Home() {
   })
   const [noteDraft, setNoteDraft] = useState("")
   const [selectedHighlightText, setSelectedHighlightText] = useState("")
+  const [isExplainingHighlight, setIsExplainingHighlight] = useState(false)
+  const [highlightExplanation, setHighlightExplanation] = useState("")
+  const [highlightExplanationError, setHighlightExplanationError] = useState("")
 
   // Keep a ref so the unmount cleanup always sees fresh blob URLs
   const booksRef = useRef(books)
@@ -386,7 +390,28 @@ function Home() {
     )
 
     setSelectedHighlightText("")
+    setHighlightExplanation("")
+    setHighlightExplanationError("")
     window.getSelection()?.removeAllRanges()
+  }
+
+  const explainHighlight = async () => {
+    const selectedText = selectedHighlightText.trim()
+    if (!selectedText || isExplainingHighlight) return
+
+    setIsExplainingHighlight(true)
+    setHighlightExplanation("")
+    setHighlightExplanationError("")
+
+    try {
+      const explanation = await explainSelectedTextWithAi(selectedText)
+      setHighlightExplanation(explanation)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nao foi possivel gerar a explicacao."
+      setHighlightExplanationError(message)
+    } finally {
+      setIsExplainingHighlight(false)
+    }
   }
 
   const removeNote = (noteId: string) => {
@@ -458,6 +483,8 @@ function Home() {
           setActiveBookId(nextBook?.id ?? "")
           setPageInput(String(nextBook?.lastPage ?? 1))
           setSelectedHighlightText("")
+          setHighlightExplanation("")
+          setHighlightExplanationError("")
         }}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -468,13 +495,21 @@ function Home() {
           setActiveBookId(bookId)
           setPageInput(String(nextBook?.lastPage ?? 1))
           setSelectedHighlightText("")
+          setHighlightExplanation("")
+          setHighlightExplanationError("")
         }}
       />
 
       <ReaderPanel
         activeBook={activeBook ?? null}
         highlights={activeBook?.highlights ?? []}
-        onHighlightSelectionChange={setSelectedHighlightText}
+        onHighlightSelectionChange={(value) => {
+          setSelectedHighlightText(value)
+          if (!value.trim()) {
+            setHighlightExplanation("")
+            setHighlightExplanationError("")
+          }
+        }}
         pageInput={pageInput}
         onPageInputChange={setPageInput}
         onApplyPage={applyPage}
@@ -487,9 +522,13 @@ function Home() {
         activeBook={activeBook ?? null}
         noteDraft={noteDraft}
         selectedHighlightText={selectedHighlightText}
+        isExplainingHighlight={isExplainingHighlight}
+        highlightExplanation={highlightExplanation}
+        highlightExplanationError={highlightExplanationError}
         onNoteDraftChange={setNoteDraft}
         onAddNote={addNote}
         onCreateNoteFromHighlight={createNoteFromHighlight}
+        onExplainHighlight={explainHighlight}
         onRemoveNote={removeNote}
         onAddBookmark={addBookmark}
         onRemoveBookmark={removeBookmark}
