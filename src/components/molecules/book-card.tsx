@@ -23,6 +23,17 @@ export function BookCard({
   onRestore,
   onToggleFavorite,
 }: BookCardProps) {
+  const coverStyle = book.coverImage
+    ? {
+        backgroundImage: `url(${book.coverImage})`,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+      }
+    : {
+        background: `linear-gradient(140deg, ${book.coverA}, ${book.coverB})`,
+      }
+
   return (
     <div
       className={`book-card ${selected ? "is-selected" : ""}`}
@@ -36,12 +47,7 @@ export function BookCard({
         }
       }}
     >
-      <div
-        className="book-cover"
-        style={{
-          background: `linear-gradient(140deg, ${book.coverA}, ${book.coverB})`,
-        }}
-      />
+      <div className="book-cover" style={coverStyle} />
       <div className="book-meta">
         <span className="book-title">{book.title}</span>
         <span className="book-author">{book.author}</span>

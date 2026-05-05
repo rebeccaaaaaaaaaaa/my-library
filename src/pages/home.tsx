@@ -6,6 +6,7 @@ import { RightPanel } from "@/components/organisms/right-panel"
 import type { LibraryBook } from "@/types/reader"
 import { clamp, makeId } from "@/utils/reader"
 import {
+  getPdfCoverImage,
   getPdfPageCount,
   loadBooks,
   loadPdfUrl,
@@ -36,6 +37,7 @@ function readStoredBooks(): LibraryBook[] {
     dailyGoal: normalizeDailyGoal(book.dailyGoal ?? 12),
     readingStats: book.readingStats ?? [],
     deletedAt: book.deletedAt,
+    coverImage: book.coverImage,
   }))
 }
 
@@ -410,6 +412,7 @@ function Home() {
     const id = makeId()
     const title = file.name.replace(/\.pdf$/i, "")
     const totalPages = await getPdfPageCount(file)
+    const coverImage = await getPdfCoverImage(file)
     await savePdf(id, file)
     const sourceUrl = URL.createObjectURL(file)
 
@@ -418,6 +421,7 @@ function Home() {
       title,
       author: "PDF enviado",
       isFavorite: false,
+      coverImage: coverImage ?? undefined,
       progress: Math.round((1 / Math.max(1, totalPages)) * 100),
       lastPage: 1,
       totalPages,

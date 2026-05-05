@@ -29,6 +29,7 @@ export type LibraryBook = {
   author: string
   isFavorite: boolean
   deletedAt?: string
+  coverImage?: string
   progress: number
   lastPage: number
   totalPages: number

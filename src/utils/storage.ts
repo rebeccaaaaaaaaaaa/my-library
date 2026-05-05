@@ -101,3 +101,36 @@ export async function getPdfPageCount(file: File): Promise<number> {
     return Math.max(1, ...counts)
   }
 }
+
+export async function getPdfCoverImage(source: File | string): Promise<string | null> {
+  try {
+    const loadingTask =
+      typeof source === "string"
+        ? getDocument(source)
+        : getDocument({ data: await source.arrayBuffer() })
+
+    const pdf = await loadingTask.promise
+    const page = await pdf.getPage(1)
+    const baseViewport = page.getViewport({ scale: 1 })
+    const targetWidth = 120
+    const scale = targetWidth / Math.max(1, baseViewport.width)
+    const viewport = page.getViewport({ scale })
+
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d")
+    if (!context) {
+      await pdf.destroy()
+      return null
+    }
+
+    canvas.width = Math.max(1, Math.floor(viewport.width))
+    canvas.height = Math.max(1, Math.floor(viewport.height))
+
+    await page.render({ canvas, canvasContext: context, viewport }).promise
+    const coverDataUrl = canvas.toDataURL("image/jpeg", 0.82)
+    await pdf.destroy()
+    return coverDataUrl
+  } catch {
+    return null
+  }
+}
